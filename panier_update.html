@@ -1,0 +1,7 @@
+[(#HTTP_HEADER{Content-type: text/plain[; charset=(#CHARSET)]})]
+<?php
+	$items = panier_explique_cookie(_request('panier'));
+	$items = pipeline('panier_actualise_contenu',array('args'=>array(),'data'=>$items));
+	$panier = panier_make_cookie($items);
+	echo $panier;
+?>

@@ -1,0 +1,354 @@
+#CACHE{24*3600,cache-client}
+#HTTP_HEADER{Content-Type: text/javascript}
+/*
+ * panier for SPIP
+ *
+ * Copyright (c) 2006 Renato Formato (renatoformato@virgilio.it)
+ * Licensed under the GPL License:
+ *   http://www.gnu.org/licenses/gpl.html
+ *
+ * Utilisation du microformat vproduct
+ *	<span class='vproduct' id='refNN'>
+ *		<span class='resume' title='NN'>nom du produit</span>
+ *		<span class='category' title='NN'>Categorie produit</span>
+ *		<span class='quantity' title='1'>1<span class='max'>2</span></span>
+ *		<span class='net_price' title='XX.X'>XX.X~EUR</span>
+ *		<span class='gross_price' title='XX.X'>XX.X~EUR</span>
+ *	</span>
+ */
+
+// duree de vie du panier (en heures)
+var PANIER_TTL = 7*24;
+//CSS style selector to match the draggables
+var DRAGGABLES_SEL = '.vproduct';
+
+//CSS style selector to match the element you want to append the drop box to
+var PANIER_CONTAINER = "#panier_decompte,#porte_panier";
+
+//var PANIER_ITEM = '<li><a href="#" onclick="return false;" class="panier_delete" title="<:panier:anchor_delete_title:>"><span><img src="#CHEMIN{img_pack/panier_del-24.png}" alt="<:panier:anchor_delete_text:>" /></span></a></li>';
+var PANIER_MODE = 'link'; //can be link or drag
+
+var PANIER_ADD = '<a class="cart_add"  href="#porte_panier" onclick="panier_dropit(this.parentNode);" title="<:panier:anchor_add_title:>"><img src="#CHEMIN{img_pack/panier_add-24.png}" width="24" height="24" alt="<:panier:anchor_add_text:>" /><em> <:panier:anchor_add_text:></em></a>';
+var PANIER_REMOVE = '<a class="cart_remove" href="#" onclick="panier_removeit(this.parentNode);return false;" title="<:panier:anchor_delete_title:>"><img src="#CHEMIN{img_pack/panier_del-24.png}" width="24" height="24" alt="<:panier:anchor_delete_text:>" /><em> <:panier:anchor_delete_text:></em></a>';
+var PANIER_EMPTY = '<div class="panier_empty"><a href="#" onclick="panier_empty();return false;"><img src="#CHEMIN{img_pack/panier_recycle-24.png}" alt="<:panier:empty_cart:>" /></a></div>';
+
+var heading_text = PANIER_MODE=="link"?"<:panier:link:>":"<:panier:drag_drop:>"; 
+var PANIER_HEADER = '';
+
+var PANIER_TOTAL = '<span class="vtotal">'
++'<span class="resume" title="total"><:panier:total:></span>'
++'<span class="category"></span>'
++'<span class="quantity"></span>'
++'<span class="net_price" title="0"><span class="val">0.00</span>&nbsp;&euro;</span>'
++'<span class="gross_price" title="0"><span class="val">0.00</span>&nbsp;&euro;</span>'
++'</span>';
+
+var aucun_article = '<:panier:aucun_article:>';
+var un_article = '<:panier:un_article:>';
+var des_article = '<:panier:des_article:>';
+var COOKIE_PATH = '[(#CONFIG{adresse_site}|parse_url|table_valeur{path})]';
+
+var panier_fade_end=null;
+panier_fade_end = [255,255,255];
+
+#INCLURE{fond=panier_config}
+
+var panier_ul,panier;
+var panier_background = null;
+var panier_content = new Array(); /* id, quantite, net, gross, category */
+
+$(document).ready(function(){
+	
+	$(PANIER_CONTAINER).eq(1).hide();
+	container = $(PANIER_CONTAINER).eq(0);
+	if (!container.length) return;
+	if (container.is('.debug')) return;
+	if (!container.find('#panier').length) {
+		container
+		  .append('<div id="decompte">'+aucun_article+'</div>')
+		  .append(PANIER_TOTAL)
+		  .append('<div id="panier"></div>');
+	}
+	//else $('#panier').html('');
+
+	panier = $('#panier')
+		//.hide()
+	  .append(PANIER_HEADER)
+	  //.append('<ul></ul>')
+	  .append(PANIER_EMPTY);
+
+	/*if(PANIER_MODE=='drag') {
+		panier.Droppable({accept:'panier_drag',tolerance:'intersect',ondrop:panier_dropit});
+		$(DRAGGABLES_SEL).addClass('panier_drag').Draggable({ghosting:true,revert:true,insideParent:true,zIndex:1,opacity:0.8});
+	} else */
+	panier_ul = $('ul',panier);
+	panier_init();
+
+})
+
+/* initialiser le panier en fonction du cookie, et placer les actions sur les produits dans la page */
+function panier_init() {
+	//lire le cookie du panier et le mettre en memoire
+	var cookie = panier_readCookie('panier');
+	panier_importeString(cookie);
+	
+	panier_calcul_total();
+	// mettre a jour les liens en fonction de cela
+	if(PANIER_MODE=='link') {
+		$(DRAGGABLES_SEL).each(function(){panier_update_product_actions(this);});
+	}
+}
+
+/* mettre a jour les actions sur un produit */
+function panier_product_max_atteint(node){
+	var id = $(node).find('span.resume').attr('title');
+	var qmax = $(node).find('span.quantity > span.max');
+	var qte = panier_quantite_article(id);
+	if (qmax.length){
+		qmax = parseInt(qmax.html());
+		qmax = (qmax>qte)?false:true;
+	}
+	else qmax=false;
+	return qmax;
+}
+function panier_update_product_actions(node){
+	if ($(node).find('a.cart_add').length==0) {
+		$(node).append(PANIER_ADD).append(PANIER_REMOVE);
+	}
+	
+	if (!panier_product_max_atteint(node)) {
+		$(node).find('a.cart_add').removeClass('off');
+	}
+	else
+		$(node).find('a.cart_add').addClass('off');
+	var id = $(node).find('span.resume').attr('title');
+	var qte = panier_quantite_article(id);
+	if (qte) {
+		$(node).find('a.cart_remove').removeClass('off');
+	}
+	else $(node).find('a.cart_remove').addClass('off');
+}
+
+function panier_quantite_article(id){
+	for (k=0;k<panier_content.length;k++){
+		if (panier_content[k][0]==id) return panier_content[k][1];
+	}
+	return 0;
+}
+function panier_ajoute_article(id,qte,net,gross,category){
+	for (var k=0;k<panier_content.length;k++){
+		if (panier_content[k][0]==id){
+			panier_content[k][1]=parseInt(panier_content[k][1])+parseInt(qte);
+			if (panier_content[k][1]<0) panier_content[k][1]=0;
+			panier_content[k][2]=panier_content[k][1]*net;
+			panier_content[k][3]=panier_content[k][1]*gross;
+			panier_content[k][4]=category;
+			return;
+		}
+	}
+	if (qte>0)
+		panier_content.push([id,qte,qte*net,qte*gross,category]);
+	return;
+}
+
+function panier_formate_monnaie(val){
+	if ((typeof(val)=='string') && (val.substr(-1,1)=='%'))	return val;
+	if (!val) return '0.00';
+	val = parseInt(val*100)+'1';
+	var res = val/1000+'';
+	return res.substring(0,res.length-1);
+}
+function panier_calcul_total(){
+	var cart=$('#vcart');
+	var prix;
+	var total = 0;
+	var total_ht = 0;
+	var nb =0;
+	var reduc=1.0;
+
+	for (var k=0;k<panier_content.length;k++){
+		if (parseFloat(panier_content[k][3])>0) 
+			nb+=parseInt(panier_content[k][1]); // ne pas compter les reduc dans le nb d'articles
+
+		if ((typeof(panier_content[k][3])=='string') && (panier_content[k][3].substr(-1,1)=='%')){
+			reduc  = reduc * (1+parseFloat(panier_content[k][3])/100.0);
+		}
+		else
+		{
+			total_ht += parseFloat(panier_content[k][2]);
+			total += parseFloat(panier_content[k][3]);
+		}
+		if (cart.length){
+			if (parseInt(panier_content[k][1])>0){
+				cart.find('>.ref'+panier_content[k][0]+'>.quantity').html(panier_content[k][1]);
+				cart.find('>.ref'+panier_content[k][0]+'>.net_price>span.val').html(panier_formate_monnaie(panier_content[k][2]));
+				cart.find('>.ref'+panier_content[k][0]+'>.gross_price>span.val').html(panier_formate_monnaie(panier_content[k][3]));
+			}
+			else
+				cart.find('>.ref'+panier_content[k][0]).remove();
+		}
+	}
+	if (nb==0) {
+		nb=aucun_article;
+		$('#panier:visible').fadeOut('fast');
+		$('div.je_valide').css('visibility','hidden');
+	}
+	else if (nb==1) {
+		if (!$('#panier').parent().is('.sans_detail'))
+			$('#panier:hidden').fadeIn('fast');
+		$('div.je_valide').css('visibility','visible');
+		nb=un_article;
+	}
+	else nb = des_article.replace('@nb@',nb);
+	$(PANIER_CONTAINER).eq(0).find('div#decompte').html(nb);
+	if (total_ht<0) total_ht=0;
+	if (total<0) total=0;
+	total = total*reduc;
+	total_ht = total_ht*reduc;
+	$(PANIER_CONTAINER).eq(0).find('.vtotal > .net_price >span.val').html(panier_formate_monnaie(total_ht));
+	$(PANIER_CONTAINER).eq(0).find('.vtotal > .gross_price >span.val').html(panier_formate_monnaie(total));
+}
+
+function panier_empty(){
+	panier_content = new Array();
+	panier_createCookieString();
+	panier_calcul_total();
+	if(PANIER_MODE=='link') {
+		$(DRAGGABLES_SEL).each(function(){panier_update_product_actions(this);});
+	}
+}
+
+function panier_dropit(drag) {
+	if (!panier_product_max_atteint(drag)) {
+		var id = $(drag).find('span.resume').attr('title');
+		var qte_add = $(drag).find('span.quantity').attr('title');
+		var net = $(drag).find('span.net_price').attr('title');
+		var gross = $(drag).find('span.gross_price').attr('title');
+		var category = $(drag).find('span.category').attr('title');
+		panier_ajoute_article(id,qte_add,net,gross,category);
+		panier_calcul_total();
+		doBGFade($(PANIER_CONTAINER).get(0),[255,255,100],panier_fade_end,panier_fade_end,40,20,4);
+		$('.vproduct.ref'+id).each(function(){panier_update_product_actions(this)});
+		panier_createCookieString();
+		panier_updateFromServer(panier_createString());
+	}
+}
+function panier_removeit(drag) {
+	var id = $(drag).find('span.resume').attr('title');
+	var qte = panier_quantite_article(id);
+	if (qte>0){
+		var qte_rem = $(drag).find('span.quantity').attr('title');
+		var net = $(drag).find('span.net_price').attr('title');
+		var gross = $(drag).find('span.gross_price').attr('title');
+		var category = $(drag).find('span.category').attr('title');
+		panier_ajoute_article(id,-1*qte_rem,net,gross,category);
+		panier_calcul_total();
+		doBGFade($(PANIER_CONTAINER).get(0),[255,255,180],panier_fade_end,panier_fade_end,40,20,4);
+		$('.vproduct.ref'+id).each(function(){panier_update_product_actions(this)});
+		panier_createCookieString();
+		panier_updateFromServer(panier_createString());
+	}
+}
+
+function panier_updateFromServer(s){
+	$.get('#URL_PAGE{panier_update}',{panier:s},function(data){
+		var old_panier = panier_content;
+		panier_importeString(data);
+		var cart=$('#vcart');
+		if (cart.length){
+			// virer les produits qui ont ete supprimes
+			for (var k=0;k<old_panier.length;k++){
+				if (panier_quantite_article(old_panier[k][0])<=0)
+					cart.find('>.ref'+old_panier[k][0]).remove();
+			}
+			// ajouter les nouveaux
+			for (var k=0;k<panier_content.length;k++)
+				if(!cart.find('>.ref'+panier_content[k][0]).length)
+					$.get('#URL_PAGE{panier_detail_ligne}',{id:panier_content[k][0]},function(data){$('#vcart .vtotal').before(data);panier_calcul_total();});
+		}
+		panier_calcul_total();
+	});
+}
+
+
+// format du panier :
+// id|qte|net|gross|category
+function panier_importeString(cookie){
+	panier_content = new Array();
+	var items = cookie ? cookie.split('!') : [];
+	if (items.length>0)
+		for(var i=0;i<items.length;i++) {
+			var elems = items[i].split('|'); 
+			if (elems.length==5)
+				panier_content.push(elems);
+		}
+}
+
+function panier_createString() {
+	var c='';var d='';
+	for (var k=0;k<panier_content.length;k++){
+		d='';
+		if (parseInt(panier_content[k][1])>0)
+			for (var j=0;j<panier_content[k].length;j++){
+				d+="|"+panier_content[k][j];
+			}
+		if (d.length)
+			c+= d.substr(1,d.length-1)+"!";
+	}
+	return c;
+}
+function panier_createCookieString() {
+	panier_createCookie('panier',panier_createString(),PANIER_TTL);
+}
+
+// Gestion des cookies ------------------------------------------------------------------------
+// http://www.quirksmode.org/js/cookies.html 
+function panier_createCookie(name,value,hours) {
+	if (hours) {
+		var date = new Date();
+		date.setTime(date.getTime()+(hours*60*60*1000));
+		var expires = "; expires="+date.toGMTString();
+	}
+	else var expires = "";
+	document.cookie = name+"="+escape(value)+expires+"; path="+COOKIE_PATH+"/";
+}
+
+function panier_readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return unescape(c.substring(nameEQ.length,c.length));
+	}
+	return null;
+}
+function panier_eraseCookie(name){
+	panier_createCookie(name,"",-1);
+	//alert(document.cookie);
+}
+
+// Gestion du Yellow Fade (fonctionnalite optionnelle) -------------------------------------------
+function easeInOut(minValue,maxValue,totalSteps,actualStep,powr) {
+	var delta = maxValue - minValue;
+	var stepp = minValue+(Math.pow(((1 / totalSteps)*actualStep),powr)*delta);
+	return Math.ceil(stepp)
+};
+
+function doBGFade(elem,startRGB,endRGB,finalColor,steps,intervals,powr) {
+	if (elem.bgFadeInt) window.clearInterval(elem.bgFadeInt);
+	var actStep = 0;
+	elem.bgFadeInt = window.setInterval(
+		function() {
+			elem.style.backgroundColor = "rgb("+
+				easeInOut(startRGB[0],endRGB[0],steps,actStep,powr)+","+
+				easeInOut(startRGB[1],endRGB[1],steps,actStep,powr)+","+
+				easeInOut(startRGB[2],endRGB[2],steps,actStep,powr)+")";
+			actStep++;
+			if (actStep > steps) {
+			elem.style.backgroundColor = finalColor;
+			window.clearInterval(elem.bgFadeInt);
+			}
+		}
+		,intervals)
+};

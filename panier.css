@@ -1,0 +1,63 @@
+/*Change the style as you desire*/
+/*The drop box*/
+#panier {background:#f4e3de;font-size:x-small;padding:0 5px;}
+#panier .total {background:#fff;}
+/*The drop box heading*/
+#panier_heading {font-weight:bold;padding:5px}
+/*The ul that will receive link items*/
+#panier ul {padding:5px 0;list-style:none;margin:0;}
+/*The listitems in the box*/
+#panier ul li {position:relative;margin:5px 0;border-bottom:1px solid #eee;height:24px;clear:both;}
+#panier > ul li {height:auto;min-height:24px;}
+/*The delete link*/
+.panier_delete {display:block;float:right;}
+/*The delete link text - to consent not to show it and place an image as background*/
+.panier_delete span {}
+/*The draggable items. This class is added only if javascript is active*/
+.panier_drag {background:#ffc}
+/*The panier link, if panier_MODE is link*/
+.panier_link {font-size:80%;margin:0px 10px}
+
+.panier_empty {text-align:right;}
+.produit span {display:none;}
+
+.chariot a.icone img {float:left;margin-right:5px;}
+#decompte {padding-left:29px;}
+.total {padding-left:29px;}
+/*
+#panier_decompte {margin:2em 0;}
+#panier_decompte #panier {background:none;}
+#panier .produit span {display:inline;}
+#panier_decompte .produit span {display:inline;}
+#panier_decompte span.resume {display:block;float:left;width:280px;border-right:1px solid;height:3em;}
+#panier_decompte span.qte {display:block;float:left;width:40px;text-align:center;border-right:1px solid;height:3em;}
+#panier_decompte span.prix_ht {display:block;float:left;width:80px;text-align:right;border-right:1px solid;height:3em;padding-right:5px;}
+#panier_decompte span.prix {display:block;float:left;width:80px;text-align:right;border-right:1px solid;height:3em;padding-right:5px;}
+#panier_decompte ul li {height:3em;}
+#panier_decompte .total {padding-left:5px;font-size:small;}
+#panier_decompte .total span {border:none;}
+#contenu #decompte {padding-left:5px;}
+
+#bon_commande {margin:2em 0;font-size:x-small;}
+#bon_commande ul {padding:5px 0;list-style:none;margin:0;}
+#bon_commande #panier {background:none;}
+#panier .produit span {display:inline;}
+#bon_commande .produit span {display:inline;}
+#bon_commande span.resume {display:block;float:left;width:280px;border-right:1px solid;height:3em;}
+#bon_commande span.qte {display:block;float:left;width:40px;text-align:center;border-right:1px solid;height:3em;}
+#bon_commande span.prix_ht {display:block;float:left;width:80px;text-align:right;border-right:1px solid;height:3em;padding-right:5px;}
+#bon_commande span.prix {display:block;float:left;width:80px;text-align:right;border-right:1px solid;height:3em;padding-right:5px;}
+#bon_commande ul li {height:3em;}
+#bon_commande .total {padding-left:5px;font-size:small;}
+#bon_commande .total span {border:none;}
+#contenu #decompte {padding-left:5px;}
+#commande_resume h3 {font-size:small;}
+#commande_resume #bon_commande {font-size:xx-small;}
+#commande_resume #bon_commande .total {padding-left:5px;font-size:x-small;}
+
+#porte_panier span.prix_ht {display:none;}
+#porte_panier span.qte {display:none;}
+
+.je_valide,
+.je_continue  {clear:both;float:right;width:250px;background:#f4e3de;height:2em;text-align:left;border:1px solid #f4e3de;padding:0.5em 1em;}
+.je_continue { background:none;}*/

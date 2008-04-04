@@ -1,0 +1,1 @@
+<BOUCLE_donnees(FORMS_DONNEES){id_donnee IN #ENV*{produits}|array_keys}{produit}{'!'}>#ID_DONNEE|[(#ENV*{produits}|table_valeur{#ID_DONNEE})]|<BOUCLE_champsprix(FORMS_CHAMPS){id_form}{champ?}{type=monnaie}{par rang}{0,1}>[(#LESVALEURS*|div{#CONFIG{coeff_tva}})]|#LESVALEURS*|</BOUCLE_champsprix>#LESVALEURS*{mot_1,' '}</BOUCLE_donnees>!

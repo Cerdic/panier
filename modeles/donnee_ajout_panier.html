@@ -1,0 +1,15 @@
+<BOUCLE_donnees(FORMS_DONNEES){id_donnee}{produit}>
+	<span class='vproduct ref#ID_DONNEE'>
+		<span class='resume' title='#ID_DONNEE'>
+			<BOUCLE_champs(FORMS_CHAMPS){id_form}{type !IN (separateur,textestatique,monnaie)}{par rang}{specifiant=oui}{' '}>
+				#LESVALEURS{' '}
+			</BOUCLE_champs>
+		</span>
+		<span class='category' title='#LESVALEURS{mot_1,' '}'>#LESVALEURS{mot_1,' '}</span>
+		<span class='quantity' title='1'>1<span class='max'>#ENV{qte_max,1}</span></span>
+		<BOUCLE_champsprix(FORMS_CHAMPS){id_form}{champ?}{type=monnaie}{par rang}{0,1}>
+		<span class='net_price' title='[(#LESVALEURS*|div{#CONFIG{coeff_tva}})]'>[(#LESVALEURS*|div{#CONFIG{coeff_tva}}|forms_format_monnaie{#TAILLE}|typo)]</span>
+		<span class='gross_price' title='#LESVALEURS*'>#LESVALEURS{' '}</span>
+		</BOUCLE_champsprix>
+	</span>
+</BOUCLE_donnees>

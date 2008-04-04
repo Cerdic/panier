@@ -1,0 +1,77 @@
+#CACHE{0}
+#SET{items,#ARRAY}
+<BOUCLE_monpanier(PANIERS){id_panier=#SESSION{id_panier}}><B_liens>
+<div id='panier_decompte'>
+	<div id="decompte">
+	[(#TOTAL_BOUCLE|=={0}|?{<:panier:aucun_article:>})]
+	[(#TOTAL_BOUCLE|=={1}|?{<:panier:un_article:>})]
+	[(#TOTAL_BOUCLE|>{1}|?{' '}) [(#REM|sinon{<:panier:des_article:>}|_T{#ARRAY{nb,#TOTAL_BOUCLE}})] ]
+	</div>
+	<div id='panier'>
+	<table>
+		<thead>
+			<tr>
+				<td class='resume'>Article</span>
+				<td class='quantity'>Quantit&eacute;</span>
+				<td class='net_price'>Prix H.T.</span>
+				<td class='gross_price'>Prix</span>
+				<td class='action'></span>
+			</tr>
+		</thead>
+		<tbody id='vcart'>
+		<BOUCLE_liens(FORMS_DONNEES_PANIERS){id_panier}{par rang}>
+			<BOUCLE_produits(FORMS_DONNEES){id_donnee}{produit}>
+			<tr class='ref#ID_DONNEE'>
+				<td class='resume'>
+					#SET{a,''}
+					<BOUCLE_rub(RUBRIQUES){id_donnee}{tout_voir}><a href='#URL_RUBRIQUE'>#SET{a,'</a>'}</BOUCLE_rub>
+					<BOUCLE_champs(FORMS_CHAMPS){id_form}{type !IN (separateur,textestatique,monnaie)}{par rang}{specifiant=oui}{' '}>
+					#LESVALEURS{' '}
+					</BOUCLE_champs>#GET{a}
+				</td>
+				<td class='quantity'>#_liens:QUANTITE</td>
+				<BOUCLE_champsprix(FORMS_CHAMPS){id_form}{champ?}{type=monnaie}{par rang}{0,1}>
+					#SET{prix,#LESVALEURS*|mult{#_liens:QUANTITE}}#SET{prix_ht,#GET{prix}|div{#CONFIG{coeff_tva}}}
+					[(#GET{items}|array_push{#ARRAY{0,#ID_DONNEE,1,#_liens:QUANTITE,2,#GET{prix_ht},3,#GET{prix}}}|vide)]
+					<td class='net_price'><span class="val">[(#GET{prix_ht}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>
+					<td class='gross_price'><span class="val">[(#GET{prix}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>
+				</BOUCLE_champsprix>
+				<td class='action'>[(#GET{prix}|>{0}|?{#MODELE{donnee_ajout_panier,id_donnee}})]</span>
+			</tr>
+			</BOUCLE_produits><BOUCLE_promo(FORMS_DONNEES){id_donnee}{promo}>
+			<tr class='ref#ID_DONNEE'>
+				<td class='resume'>
+					<BOUCLE_champs2(FORMS_CHAMPS){id_form}{type !IN (separateur,textestatique,monnaie)}{par rang}{specifiant=oui}{' '}>
+					#LESVALEURS{' '}
+					</BOUCLE_champs2>
+				</td>
+				<td class='quantity'></td>
+					#SET{prix,#LESVALEURS*{num_1,''}|mult{-1}}
+					[(#LESVALEURS**{select_1,''}|match{%}|?{'',' '})#SET{prix_ht,#GET{prix}|div{#CONFIG{coeff_tva}}}
+					[(#GET{items}|array_push{#ARRAY{0,#ID_DONNEE,1,1,2,#GET{prix_ht},3,#GET{prix}}}|vide)]
+					<td class='net_price'><span class="val">[(#GET{prix_ht}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>
+					<td class='gross_price'><span class="val">[(#GET{prix}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>]
+					[(#LESVALEURS**{select_1,''}|match{%}|?{' '})#SET{pourcent,#GET{prix}|concat{%}}
+					[(#GET{items}|array_push{#ARRAY{0,#ID_DONNEE,1,1,2,#GET{pourcent},3,#GET{pourcent}}}|vide)]
+					<td class='net_price'><span class="val">[(#GET{pourcent})]</span></td>
+					<td class='gross_price'><span class="val">[(#GET{pourcent})]</span></td>]
+				<td class='action'></span>
+			</tr>
+			</BOUCLE_promo><//B_produits>
+		</BOUCLE_liens>
+		<tr class="vtotal">
+			<td class='resume'><:panier:total:></td>
+			<td class='quantity'></td>#SET{total,#GET{items}|panier_calcul_total}
+			<td class='net_price'><span class="val">[(#GET{total}|reset|forms_format_monnaie{2,''})]</span>&nbsp;EUR</td>
+			<td class='gross_price'><span class="val">[(#GET{total}|end|forms_format_monnaie{2,''})]</span>&nbsp;EUR</td>
+			<td class='action'></td>
+		</td>
+		</tbody>
+	</table>
+	</div>
+</div>
+</B_liens></BOUCLE_monpanier>
+[(#INCLURE{fond=modeles/panier_plein}{url_valide=#URL_PAGE{creer_commande}}{retour=#ENV{retour}})]
+</B_monpanier>
+[(#INCLURE{fond=modeles/panier_vide}{retour=#ENV{retour}})]
+<//B_monpanier>

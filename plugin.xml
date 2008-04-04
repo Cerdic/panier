@@ -1,0 +1,22 @@
+<plugin>
+  <nom>Panier</nom>
+  <auteur>[Renato Formato->mailto:renatoformato@virgilio.it]
+_ Cedric Morin [yterium.com->http://www.yterium.com] </auteur>
+  <version>0.1</version>
+  <version_base>0.101</version_base>
+  <etat>test</etat>
+  <description>Un panier permettant de collecter les produits que l'on veut acheter </description>
+	<lien></lien> <!-- URI de documentation -->
+	<fonctions>base/panier.php</fonctions>
+	<options>panier_options.php</options>
+	<install>base/panier_install.php</install>
+  <prefix>panier</prefix>
+  <pipeline>
+  	<nom>insert_head</nom>
+  	<inclure>panier_pipelines.php</inclure>
+  </pipeline>
+	<pipeline>
+		<nom>bank_enregistre_reglement</nom>
+		<inclure>panier_pipelines.php</inclure>
+	</pipeline>
+</plugin>

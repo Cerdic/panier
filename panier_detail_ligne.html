@@ -1,0 +1,35 @@
+[(#HTTP_HEADER{Content-type: text/plain[; charset=(#CHARSET)]})]
+<BOUCLE_produits(FORMS_DONNEES){id_donnee=#ENV{id}}{produit}>
+<tr class='ref#ID_DONNEE'>
+	<td class='resume'>
+		<BOUCLE_champs(FORMS_CHAMPS){id_form}{type !IN (separateur,textestatique,monnaie)}{par rang}{specifiant=oui}{' '}>
+		#LESVALEURS{' '}
+		</BOUCLE_champs>
+	</td>
+	<td class='quantity'></td>
+	<BOUCLE_champsprix(FORMS_CHAMPS){id_form}{champ?}{type=monnaie}{par rang}{0,1}>
+		#SET{prix,#LESVALEURS*|mult{1}}
+		<td class='net_price'><span class="val">[(#GET{prix}|div{#CONFIG{coeff_tva}}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>
+		<td class='gross_price'><span class="val">[(#GET{prix}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>
+	</BOUCLE_champsprix>
+	<td class='action'>[(#GET{prix}|>{0}|?{#MODELE{donnee_ajout_panier,id_donnee}})]</span>
+</tr>
+</BOUCLE_produits><BOUCLE_promo(FORMS_DONNEES){id_donnee=#ENV{id}}{promo}>
+<tr class='ref#ID_DONNEE'>
+	<td class='resume'>
+		<BOUCLE_champs(FORMS_CHAMPS){id_form}{type !IN (separateur,textestatique,monnaie)}{par rang}{specifiant=oui}{' '}>
+		#LESVALEURS{' '}
+		</BOUCLE_champs>
+	</td>
+	<td class='quantity'></td>
+		#SET{prix,#LESVALEURS{num_1,''}*|mult{-1}}
+		[(#LESVALEURS{select_1}**|=={select_1_1}|?{' '})
+		<td class='net_price'><span class="val">[(#GET{prix}|div{#CONFIG{coeff_tva}}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>
+		<td class='gross_price'><span class="val">[(#GET{prix}|forms_format_monnaie{2,''}|typo)]</span>&nbsp;EUR</td>]
+		[(#LESVALEURS{select_1}**|=={select_1_1}|?{'',' '})
+		<td class='net_price'><span class="val">[(#GET{prix})]</span>%</td>
+		<td class='gross_price'><span class="val">[(#GET{prix})]</span>%</td>]
+	<td class='action'></span>
+</tr>
+</BOUCLE_promo>
+<//B_produits>
