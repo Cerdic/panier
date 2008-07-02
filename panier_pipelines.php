@@ -9,6 +9,7 @@ function panier_insert_head($flux){
 
 function panier_bank_enregistre_reglement($flux){
 	spip_log('vidange cookies panier');
+	include_spip('panier_options');
 	panier_delcookie('panier');
 	// garder la reference au panier invalide qui permettra de le supprimer
 	/*panier_delcookie('id_panier');
