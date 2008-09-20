@@ -63,7 +63,7 @@ function panier_id_panier_encours() {
 		spip_log("creation panier:$id_panier",'panier');
 		$_COOKIE['id_panier_key'] = $_COOKIE['id_panier'] = 0; // forcer la remise a jour de la cle
 	}
-	spip_log("id_encours:$id_panier/id_auteur:$id_auteur"/*.var_export($_COOKIE,true)*/,'panier');
+	#spip_log("id_encours:$id_panier/id_auteur:$id_auteur"/*.var_export($_COOKIE,true)*/,'panier');
 	return $id_panier;
 }
 
