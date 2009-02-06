@@ -47,6 +47,7 @@ var aucun_article = '<:panier:aucun_article:>';
 var un_article = '<:panier:un_article:>';
 var des_article = '<:panier:des_article:>';
 var COOKIE_PATH = '[(#CONFIG{adresse_site}|parse_url|table_valeur{path})]';
+var COOKIE_DOMAIN = '[(#EVAL{defined('_COOKIE_DOMAIN')?_COOKIE_DOMAIN:''})]';
 
 var panier_fade_end=null;
 panier_fade_end = [255,255,255];
@@ -310,7 +311,7 @@ function panier_createCookie(name,value,hours) {
 		var expires = "; expires="+date.toGMTString();
 	}
 	else var expires = "";
-	document.cookie = name+"="+escape(value)+expires+"; path="+COOKIE_PATH+"/";
+	document.cookie = name+"="+escape(value)+expires+"; path="+COOKIE_PATH+"/" + (COOKIE_DOMAIN?"; domain="+COOKIE_DOMAIN:"");
 }
 
 function panier_readCookie(name) {
