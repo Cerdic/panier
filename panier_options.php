@@ -9,11 +9,6 @@ function panier_setcookie($nom,$valeur){
 	if ($expire==NULL) $expire = time()+_PANIER_EPHEMERE_TTL;
 	include_spip('inc/cookie');
 	spip_setcookie($nom,$_COOKIE[$nom] = $valeur, $expire);
-	if (_COOKIE_DOMAIN){
-		spip_setcookie($nom,'', -1,'AUTO',"www."._COOKIE_DOMAIN);
-		spip_setcookie($nom,'', -1,'AUTO',"homme."._COOKIE_DOMAIN);
-		spip_setcookie($nom,'', -1,'AUTO',"femme."._COOKIE_DOMAIN);		
-	}	
 }
 function panier_delcookie($nom){
 	include_spip('inc/cookie');
